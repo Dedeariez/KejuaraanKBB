@@ -1,0 +1,6 @@
+{
+  "name": "SIM Kejuaraan Tarung Derajat KBB",
+  "description": "Sistem Informasi & Manajemen Kejuaraan Antar Satlat Tarung Derajat KBB dengan integrasi live Google Sheets",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
