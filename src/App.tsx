@@ -381,7 +381,7 @@ export default function App() {
                 <div className="space-y-3">
                   <div className="flex justify-between border-b border-white/10 pb-1.5"><span className="text-xs font-bold text-slate-400">Total Atlet:</span><span className="text-3xl font-black">{validationStats.totalPeserta}</span></div>
                   <div className="flex justify-between border-b border-white/10 pb-1.5"><span className="text-xs font-bold text-slate-400">Peserta Tarung:</span><span className="text-base font-black">{validationStats.totalTarung}</span></div>
-                  <div className="flex justify-between border-b border-white/10 pb-1.5"><span className="text-xs font-bold text-slate-400">Peserta Seni Gerak:</span><span className="text-base font-black">{validationStats.totalSeniGerak}</span></div>
+                  <div className="flex justify-between border-b border-white/10 pb-1.5"><span className="text-xs font-bold text-slate-400">Peserta Seni:</span><span className="text-base font-black">{validationStats.totalSeniGerak}</span></div>
                   <div className="flex justify-between pb-1.5"><span className="text-xs font-bold text-slate-400">Selesai Timbang:</span><span className="text-base font-black text-[#FF6600]">{computedStats.weighed}</span></div>
                 </div>
               </div>
@@ -403,7 +403,6 @@ export default function App() {
               </div>
             </div>
             
-            {/* TABEL PUBLIK (BERSIH DARI TOMBOL EDIT) */}
             <div className="bg-white border-2 border-slate-950 rounded-2xl overflow-hidden shadow">
               <div className="bg-slate-950 text-white p-4 font-mono text-xs font-bold text-[#FF6600]">DAFTAR ATLET ({filteredAthletes.length} Ditemukan)</div>
               <div className="overflow-x-auto max-h-[600px]">
@@ -465,7 +464,6 @@ export default function App() {
                     </div>
                   </div>
                   
-                  {/* TABEL ADMIN & DROPDOWN EXPORT */}
                   <div className="lg:col-span-2 bg-white border-2 border-slate-900 rounded-2xl p-5 space-y-4">
                     <h4 className="text-lg font-black uppercase border-b-2 pb-3">Manajemen Timbang & Export Data</h4>
                     <div className="bg-slate-100 border-2 border-slate-900 rounded-xl p-5 space-y-4">
@@ -477,7 +475,7 @@ export default function App() {
                         <select value={exportWeightClass} onChange={(e) => setExportWeightClass(e.target.value)} className="w-full font-bold text-xs p-2 rounded border border-slate-900"><option value="SEMUA">-- Kelas BB --</option>{EXPORT_STRICT_WEIGHT_CLASSES.map(w => <option key={w} value={w}>{w}</option>)}</select>
                       </div>
 
-                    {/* TOMBOL UNDUH DATA REKAPITULASI (JEJER KANAN KIRI) */}
+                      {/* TOMBOL UNDUH DATA REKAPITULASI (JEJER KANAN KIRI) */}
                       <div className="flex flex-col sm:flex-row justify-end gap-3 pt-3 border-t border-slate-300">
                         <button
                           onClick={handleExportExcel}
@@ -498,6 +496,7 @@ export default function App() {
                           <span>Unduh PDF</span>
                         </button>
                       </div>
+                    </div>
 
                     <input type="text" placeholder="Cari atlet spesifik..." onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-slate-50 border p-2.5 rounded-lg font-bold text-sm" />
                     
