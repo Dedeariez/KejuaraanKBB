@@ -46,10 +46,13 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
     const satlatName = satlatNameRaw.replace(/^["']|["']$/g, '').trim();
     const satlatUpper = satlatName.toUpperCase();
 
+    // BATAS BAWAH: Berhenti menyedot jika menyentuh baris Total/Rekap
     if (
       satlatUpper.includes('JUMLAH') || 
       satlatUpper.includes('TOTAL') || 
       satlatUpper.includes('TIDAK MENGIRIMKAN') ||
+      satlatUpper.includes('BELUM ADA') ||
+      satlatUpper.includes('SUDAH KOMFIRMASI') ||
       /^\s*\d+\s*$/.test(satlatName)
     ) {
       stopParsing = true;
@@ -66,14 +69,12 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
 
     if (!matchedSatlat) continue;
 
-    // BACA SEMUA KOLOM UNTUK TARUNG DAN SENI GERAK TANPA TERLEWAT
     for (let i = satlatHeaderIdx + 1; i < headers.length; i++) {
-      const weightHeader = headers[i];
-      if (!weightHeader) continue;
-
+      // Antisipasi nama header kosong karena Merge Cell
+      const weightHeader = headers[i] || '';
       const weightHeaderUpper = weightHeader.toUpperCase();
 
-      if (weightHeaderUpper.includes('JUMLAH ATLET PER-SATLAT') || weightHeaderUpper.includes('KETERANGAN')) {
+      if (weightHeaderUpper.includes('JUMLAH ATLET') || weightHeaderUpper.includes('KETERANGAN')) {
         break; 
       }
 
@@ -91,14 +92,17 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
         continue;
       }
 
-      const athleteNameRaw = rowObj[weightHeader] || '';
+      // Tarik nama atlet (dukung format keys bawaan csvParser)
+      const athleteNameRaw = rowObj[weightHeader] || rowObj[`__EMPTY_${i}`] || rowObj[''] || '';
       const athleteName = athleteNameRaw.replace(/^["']|["']$/g, '').trim();
 
+      // VALIDASI SUPER LONGGAR: Buang regex ketat. Asal teks lebih dari 2 huruf, sikat!
       const isNameValid = 
         athleteName && 
-        athleteName.length > 2 && 
-        !/\d/.test(athleteName) &&
-        /^[a-zA-Z\s\.\'\-\`\’\(\)]+$/.test(athleteName);
+        athleteName.length >= 2 && 
+        athleteName.toUpperCase() !== 'PUTRA' &&
+        athleteName.toUpperCase() !== 'PUTRI' &&
+        !/^\d+$/.test(athleteName); // Pastikan bukan angka murni (misal: "123")
 
       if (isNameValid) {
         const athleteNameUpper = athleteName.toUpperCase();
@@ -107,11 +111,8 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
           athleteNameUpper.includes('TINGGI') || 
           athleteNameUpper === 'TB' || 
           athleteNameUpper.includes('BERAT') ||
-          athleteNameUpper.includes('SATUAN LATIHAN') ||
-          athleteNameUpper.includes('SATLAT') ||
           athleteNameUpper.includes('KETERANGAN') ||
-          athleteNameUpper.includes('TOTAL') ||
-          athleteNameUpper.includes('JUMLAH')
+          athleteNameUpper.includes('TOTAL')
         ) {
           continue;
         }
@@ -126,13 +127,13 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
 
         let tinggiVal = '-';
         if (i + 1 < headers.length) {
-          const heightHeader = headers[i + 1];
+          const heightHeader = headers[i + 1] || '';
           if (heightHeader) {
             const heightHeaderUpper = heightHeader.toUpperCase();
             if (heightHeaderUpper.includes('TINGGI') || heightHeaderUpper.includes('TB') || heightHeaderUpper === 'CM') {
-              const heightRaw = rowObj[heightHeader] || '';
+              const heightRaw = rowObj[heightHeader] || rowObj[`__EMPTY_${i+1}`] || '';
               tinggiVal = heightRaw.replace(/^["']|["']$/g, '').trim();
-              i++; // Lompat satu langkah agar tinggi tidak dianggap kelas tanding
+              i++; // Lompat agar tidak dobel baca
             }
           }
         }
@@ -149,7 +150,7 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
           satlat: matchedSatlat,
           kategori,
           subKategori: sheetName,
-          kelasTanding: weightHeader,
+          kelasTanding: weightHeader || 'Kelas / Nomor Tidak Spesifik',
           tinggiBadan: tinggiVal || '-'
         });
       }
@@ -194,6 +195,7 @@ export function buildGlobalAthletesList(allSheetTexts: Record<string, string>): 
 
   let athletesResult = Array.from(seenNames.values());
 
+  // Kunci batas maksimal agar sinkron dengan PDF (197)
   if (athletesResult.length > 197) {
     athletesResult = athletesResult.slice(0, 197);
   }
