@@ -477,20 +477,27 @@ export default function App() {
                         <select value={exportWeightClass} onChange={(e) => setExportWeightClass(e.target.value)} className="w-full font-bold text-xs p-2 rounded border border-slate-900"><option value="SEMUA">-- Kelas BB --</option>{EXPORT_STRICT_WEIGHT_CLASSES.map(w => <option key={w} value={w}>{w}</option>)}</select>
                       </div>
 
-                      {/* DROPDOWN UNDUH DATA REKAPITULASI (Ubah Mode File) */}
-                      <div className="flex justify-end pt-3 border-t border-slate-300">
-                        <div className="relative group">
-                          <button disabled={exportFilteredAthletes.length === 0} className="flex items-center justify-center gap-2 bg-white text-slate-900 font-black text-xs uppercase px-5 py-2.5 rounded-xl border-2 border-orange-500 cursor-pointer shadow hover:bg-slate-50 transition-all" style={{ minHeight: '44px' }}>
-                            <FileDown className="w-4 h-4 text-orange-500 shrink-0" /><span>Unduh Data Rekapitulasi</span>
-                          </button>
-                          {/* Menu Dropdown */}
-                          <div className="absolute right-0 bottom-full mb-2 hidden group-hover:block w-48 bg-white border-2 border-slate-900 rounded-xl shadow-xl overflow-hidden z-20">
-                            <button onClick={handleExportExcel} className="w-full flex items-center gap-2 text-left px-4 py-3 hover:bg-slate-100 font-bold text-xs uppercase border-b border-slate-200 text-slate-900"><FileSpreadsheet className="w-4 h-4 text-green-700" /> Unduh (.xlsx)</button>
-                            <button onClick={handleExportPDF} className="w-full flex items-center gap-2 text-left px-4 py-3 hover:bg-slate-100 font-bold text-xs uppercase text-slate-900"><FileDown className="w-4 h-4 text-red-600" /> Unduh (.pdf)</button>
-                          </div>
-                        </div>
+                    {/* TOMBOL UNDUH DATA REKAPITULASI (JEJER KANAN KIRI) */}
+                      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-3 border-t border-slate-300">
+                        <button
+                          onClick={handleExportExcel}
+                          disabled={exportFilteredAthletes.length === 0}
+                          className="flex items-center justify-center gap-2 bg-[#1d6f42] hover:bg-[#155230] text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl border-2 border-slate-950 cursor-pointer transition-colors shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ minHeight: '44px' }}
+                        >
+                          <FileSpreadsheet className="w-4 h-4 shrink-0" />
+                          <span>Unduh Excel (.xlsx)</span>
+                        </button>
+                        <button
+                          onClick={handleExportPDF}
+                          disabled={exportFilteredAthletes.length === 0}
+                          className="flex items-center justify-center gap-2 bg-[#c0392b] hover:bg-[#962d22] text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl border-2 border-slate-950 cursor-pointer transition-colors shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ minHeight: '44px' }}
+                        >
+                          <FileDown className="w-4 h-4 shrink-0" />
+                          <span>Unduh PDF</span>
+                        </button>
                       </div>
-                    </div>
 
                     <input type="text" placeholder="Cari atlet spesifik..." onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-slate-50 border p-2.5 rounded-lg font-bold text-sm" />
                     
