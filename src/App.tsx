@@ -381,7 +381,7 @@ export default function App() {
                 <div className="space-y-3">
                   <div className="flex justify-between border-b border-white/10 pb-1.5"><span className="text-xs font-bold text-slate-400">Total Atlet:</span><span className="text-3xl font-black">{validationStats.totalPeserta}</span></div>
                   <div className="flex justify-between border-b border-white/10 pb-1.5"><span className="text-xs font-bold text-slate-400">Peserta Tarung:</span><span className="text-base font-black">{validationStats.totalTarung}</span></div>
-                  <div className="flex justify-between border-b border-white/10 pb-1.5"><span className="text-xs font-bold text-slate-400">Peserta Seni:</span><span className="text-base font-black">{validationStats.totalSeniGerak}</span></div>
+                  <div className="flex justify-between border-b border-white/10 pb-1.5"><span className="text-xs font-bold text-slate-400">Peserta Seni Gerak:</span><span className="text-base font-black">{validationStats.totalSeniGerak}</span></div>
                   <div className="flex justify-between pb-1.5"><span className="text-xs font-bold text-slate-400">Selesai Timbang:</span><span className="text-base font-black text-[#FF6600]">{computedStats.weighed}</span></div>
                 </div>
               </div>
