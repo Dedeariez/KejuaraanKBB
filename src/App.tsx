@@ -156,13 +156,41 @@ export default function App() {
   });
 
   // Announcement and date status states
-  const [announcement, setAnnouncement] = useState<string>(
-    "PENTING: Seluruh kontingen wajib merampungkan berkas administrasi fisik paling lambat Kamis ini di lokasi gedung tanding guna verifikasi silang absensi tumpuk atlet."
-  );
-  const [announcementPublisher, setAnnouncementPublisher] = useState<string>("Ariez");
-  const [dateTimeStatus, setDateTimeStatus] = useState<string>(
-    "Menunggu Konfirmasi Resmi / Belum Fixed"
-  );
+  const [announcement, setAnnouncement] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('kbb_td_announcement_v3');
+      return saved || "PENTING: Seluruh kontingen wajib merampungkan berkas administrasi fisik paling lambat Kamis ini di lokasi gedung tanding guna verifikasi silang absensi tumpuk atlet.";
+    } catch (e) {
+      return "PENTING: Seluruh kontingen wajib merampungkan berkas administrasi fisik paling lambat Kamis ini di lokasi gedung tanding guna verifikasi silang absensi tumpuk atlet.";
+    }
+  });
+
+  const [announcementPublisher, setAnnouncementPublisher] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('kbb_td_announcement_publisher_v3');
+      return saved || "Ariez";
+    } catch (e) {
+      return "Ariez";
+    }
+  });
+
+  const [dateTimeStatus, setDateTimeStatus] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('kbb_td_datetime_status_v3');
+      return saved || "Menunggu Konfirmasi Resmi / Belum Fixed";
+    } catch (e) {
+      return "Menunggu Konfirmasi Resmi / Belum Fixed";
+    }
+  });
+
+  const [announcementDraft, setAnnouncementDraft] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('kbb_td_announcement_v3');
+      return saved || "PENTING: Seluruh kontingen wajib merampungkan berkas administrasi fisik paling lambat Kamis ini di lokasi gedung tanding guna verifikasi silang absensi tumpuk atlet.";
+    } catch (e) {
+      return "PENTING: Seluruh kontingen wajib merampungkan berkas administrasi fisik paling lambat Kamis ini di lokasi gedung tanding guna verifikasi silang absensi tumpuk atlet.";
+    }
+  });
 
   // Search and Filter states
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -227,6 +255,7 @@ export default function App() {
       const savedAnn = localStorage.getItem('kbb_td_announcement_v3');
       if (savedAnn) {
         setAnnouncement(savedAnn);
+        setAnnouncementDraft(savedAnn);
       }
       const savedPublisher = localStorage.getItem('kbb_td_announcement_publisher_v3');
       if (savedPublisher) {
@@ -1005,7 +1034,7 @@ export default function App() {
                 📖 Petunjuk Verifikasi Bagi Kontingen Coach / Atlet:
               </h3>
               <p className="text-sm text-slate-900 font-bold leading-relaxed mb-4">
-                Setiap Atlet yang terdata wajib mendaftarkan 6 berkas orisinil (KTP/KK, Berkas Ijazah, Surat Keterangan Medis Dokter, Izin Wali Orang Tua, Pas Foto, dan Surat Pernyataan Anggota). Silakan beralih ke tombol <strong className="text-[#FF6600] uppercase font-black">🔍 2. Pencarian &amp; Sensus Atlet</strong> di atas, ketik nama atlet Anda, klik tombol <strong className="bg-[#FF6600] uppercase text-black text-xs font-mono px-1.5 py-0.5 rounded">Verifikasi</strong> untuk memonitor ataupun melengkapi tanda centang persetujuan dokumen oleh Panitia.
+                Setiap Atlet yang terdata wajib mendaftarkan 6 berkas orisinil (KTP/KK, Berkas Ijazah, Surat Keterangan Medis Dokter, Izin Wali Orang Tua, Pas Foto, dan Surat Pernyataan Anggota). Silakan beralih ke tombol <strong className="text-[#FF6600] uppercase font-black">🔍 2. Pencarian &amp; Sensus Atlet</strong> di atas, ketik nama atlet Anda, klik tombol <strong className="bg-[#FF6600] uppercase text-black text-xs font-mono px-1.5 py-0.5 rounded">Verifikasi</strong> untuk memonitor ataupun melengkapi tanda centang persetujuan dokumen oleh Panitia Timbangan Pelaksana.
               </p>
             </div>
 
@@ -1367,17 +1396,19 @@ export default function App() {
                         </label>
                         <textarea
                           rows={4}
-                          value={announcement}
+                          value={announcementDraft}
                           onChange={(e) => {
-                            setAnnouncement(e.target.value);
+                            setAnnouncementDraft(e.target.value);
                           }}
                           placeholder="Ketik imbauan/persiapan jadwal tanding di sini..."
                           className="w-full bg-slate-50 text-slate-950 font-bold border border-slate-350 rounded p-3 text-sm focus:outline-none focus:border-[#FF6600]"
                         />
                         <button
                           onClick={() => {
+                            const finalMsg = announcementDraft.trim();
+                            setAnnouncement(finalMsg);
                             setAnnouncementPublisher(activeCommitteeName || 'Ariez');
-                            localStorage.setItem('kbb_td_announcement_v3', announcement);
+                            localStorage.setItem('kbb_td_announcement_v3', finalMsg);
                             localStorage.setItem('kbb_td_announcement_publisher_v3', activeCommitteeName || 'Ariez');
                             alert(`Pengumuman berhasil diterbitkan oleh Panitia (${activeCommitteeName || 'Ariez'})!`);
                           }}
