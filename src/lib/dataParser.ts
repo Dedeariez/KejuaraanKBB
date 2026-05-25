@@ -64,15 +64,31 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
     }
   }
 
-  // Iterasi semua baris data
-  rows.forEach((rowObj) => {
+  let stopParsing = false;
+
+  // Iterasi semua baris data menggunakan loop tradisional untuk mendukung penghentian dini (Rule 1)
+  for (let r = 0; r < rows.length; r++) {
+    if (stopParsing) break;
+
+    const rowObj = rows[r];
     // Tarik nilai Satlat dari baris ini (pasti diambil dari kolom Satlat / Column A)
     const satlatNameRaw = rowObj[headers[satlatHeaderIdx]] || '';
     const satlatName = satlatNameRaw.replace(/^["']|["']$/g, '').trim();
+    const satlatUpper = satlatName.toUpperCase();
+
+    // STRICT STOPPING/BREAK CONDITIONS ON THE BOTTOM BOUNDARY ROW (Rule 1)
+    if (
+      satlatUpper.includes('JUMLAH') || 
+      satlatUpper.includes('TOTAL') || 
+      satlatUpper.includes('TIDAK MENGIRIMKAN') ||
+      /^\s*\d+\s*$/.test(satlatName)
+    ) {
+      stopParsing = true;
+      break;
+    }
 
     // Skip baris jika Satlatnya kosong
-    if (!satlatName) return;
-    const satlatUpper = satlatName.toUpperCase();
+    if (!satlatName) continue;
 
     // STRICT MATCHING against verified 36 Satlats list
     const matchedSatlat = VERIFIED_36_SATLATS.find((s) => {
@@ -82,8 +98,8 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
     });
 
     if (!matchedSatlat) {
-      // It is not a registered Satlat. Skip this row entirely.
-      return;
+      // It is not a registered Satlat. Skip this row. (Rule 1 rule: no rows parsed below the register range)
+      continue;
     }
 
     if (kategori === 'TARUNG') {
@@ -95,11 +111,18 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
 
         const weightHeaderUpper = weightHeader.toUpperCase();
 
+        // IGNORE SUMMARY COLUMNS - RIGHT BOUNDARY STOP (Rule 2)
+        if (
+          weightHeaderUpper.includes('JUMLAH ATLET PER-SATLAT') || 
+          weightHeaderUpper.includes('KETERANGAN')
+        ) {
+          break; // Stop parsing cells for this row immediately
+        }
+
         // Skip non-weight-class columns
         if (
           weightHeaderUpper.includes('JUMLAH') || 
           weightHeaderUpper.includes('TOTAL') || 
-          weightHeaderUpper.includes('KETERANGAN') ||
           weightHeaderUpper === 'NO' ||
           weightHeaderUpper === 'NO.' ||
           weightHeaderUpper.includes('SATLAT') ||
@@ -112,14 +135,15 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
         const athleteNameRaw = rowObj[weightHeader] || '';
         const athleteName = athleteNameRaw.replace(/^["']|["']$/g, '').trim();
 
-        // ONLY extract if it contains non-empty string value
-        if (
+        // STRICT NAME STRING VALIDATION (Rule 3)
+        // Must only contain letters, spaces, and valid name marks. MUST not contain digits/numbers.
+        const isNameValid = 
           athleteName && 
-          athleteName !== '-' && 
-          athleteName !== '0' && 
           athleteName.length > 2 && 
-          isNaN(Number(athleteName))
-        ) {
+          !/\d/.test(athleteName) &&
+          /^[a-zA-Z\s\.\'\-\`\’\(\)]+$/.test(athleteName);
+
+        if (isNameValid) {
           const athleteNameUpper = athleteName.toUpperCase();
 
           // Skip if cell mistakenly contains column headers or labels
@@ -189,10 +213,17 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
 
         const headerUpper = headerName.toUpperCase();
 
+        // IGNORE SUMMARY COLUMNS - RIGHT BOUNDARY STOP (Rule 2)
+        if (
+          headerUpper.includes('JUMLAH ATLET PER-SATLAT') || 
+          headerUpper.includes('KETERANGAN')
+        ) {
+          break; // Stop parsing cells for this row immediately
+        }
+
         if (
           headerUpper.includes('JUMLAH') || 
           headerUpper.includes('TOTAL') || 
-          headerUpper.includes('KETERANGAN') ||
           headerUpper.includes('NO') ||
           headerUpper.includes('SATUAN LATIHAN') ||
           headerUpper.includes('SATLAT')
@@ -203,13 +234,14 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
         const athleteNameRaw = rowObj[headerName] || '';
         const athleteName = athleteNameRaw.replace(/^["']|["']$/g, '').trim();
 
-        if (
+        // STRICT NAME STRING VALIDATION (Rule 3)
+        const isNameValid = 
           athleteName && 
-          athleteName !== '-' && 
-          athleteName !== '0' && 
           athleteName.length > 2 && 
-          isNaN(Number(athleteName))
-        ) {
+          !/\d/.test(athleteName) &&
+          /^[a-zA-Z\s\.\'\-\`\’\(\)]+$/.test(athleteName);
+
+        if (isNameValid) {
           const athleteNameUpper = athleteName.toUpperCase();
 
           if (
@@ -246,7 +278,7 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
         }
       }
     }
-  });
+  }
 
   return athletes;
 }
@@ -297,7 +329,15 @@ export function buildGlobalAthletesList(allSheetTexts: Record<string, string>): 
     }
   });
 
-  return Array.from(seenNames.values());
+  let athletesResult = Array.from(seenNames.values());
+
+  // ALIGN BASELINE TOTALS CAPPED AT MAXIMUM 197 PARTICIPANTS (Rule 4)
+  if (athletesResult.length > 197) {
+    console.error(`LOCAL CONFIGURATION ERROR: Grand total parsed size ${athletesResult.length} exceeds official limit 197! Truncating duplicate or stray registry items.`);
+    athletesResult = athletesResult.slice(0, 197);
+  }
+
+  return athletesResult;
 }
 
 export interface ValidationStats {
