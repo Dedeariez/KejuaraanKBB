@@ -16,66 +16,77 @@ export interface SpreadsheetTab {
 export const SPREADSHEET_TABS: SpreadsheetTab[] = [
   {
     name: 'UDIN PA 5-1 SMP',
+    gid: '',
     category: 'udin',
     gender: 'PA',
     description: 'Kategori Usia Dini (Putra) Tingkat SD Kelas 5 sampai SMP Kelas 1'
   },
   {
     name: 'UDIN PI 5-1 SMP',
+    gid: '',
     category: 'udin',
     gender: 'PI',
     description: 'Kategori Usia Dini (Putri) Tingkat SD Kelas 5 sampai SMP Kelas 1'
   },
   {
     name: 'PELAJAR PA 2 SMP- 1 SMA',
+    gid: '',
     category: 'pelajar',
     gender: 'PA',
     description: 'Kategori Pelajar (Putra) Tingkat SMP Kelas 2 sampai SMA Kelas 1'
   },
   {
     name: 'PELAJAR PI 2 SMP- 1 SMA',
+    gid: '',
     category: 'pelajar',
     gender: 'PI',
     description: 'Kategori Pelajar (Putri) Tingkat SMP Kelas 2 sampai SMA Kelas 1'
   },
   {
     name: 'PELAJAR PA 3 SMP- 2 SMA',
+    gid: '',
     category: 'pelajar',
     gender: 'PA',
     description: 'Kategori Pelajar (Putra) Tingkat SMP Kelas 3 sampai SMA Kelas 2'
   },
   {
     name: 'PELAJAR PI 3 SMP- 2 SMA',
+    gid: '',
     category: 'pelajar',
     gender: 'PI',
     description: 'Kategori Pelajar (Putri) Tingkat SMP Kelas 3 sampai SMA Kelas 2'
   },
   {
     name: 'UMUM PA KELAS 3 SMA - 29 THN',
+    gid: '',
     category: 'umum',
     gender: 'PA',
     description: 'Kategori Umum (Putra) Tingkat SMA Kelas 3 sampai Usia 29 Tahun'
   },
   {
     name: 'UMUM PI KELAS 3 SMA - 29 THN',
+    gid: '',
     category: 'umum',
     gender: 'PI',
     description: 'Kategori Umum (Putri) Tingkat SMA Kelas 3 sampai Usia 29 Tahun'
   },
   {
     name: 'ULOT',
+    gid: '',
     category: 'ulot',
     gender: 'campuran',
     description: 'Kategori Tarung Bebas Usia Lanjut (Ulot)'
   },
   {
     name: 'SENI GERAK UDIN,PELAJAR',
+    gid: '',
     category: 'seni_gerak',
     gender: 'campuran',
     description: 'Nomor Seni Gerak Kategori Usia Dini & Pelajar'
   },
   {
     name: 'SENI GERAK UMUM,ULOT',
+    gid: '',
     category: 'seni_gerak',
     gender: 'campuran',
     description: 'Nomor Seni Gerak Kategori Umum & Ulot'

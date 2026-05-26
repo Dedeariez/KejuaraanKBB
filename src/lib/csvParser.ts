@@ -6,11 +6,12 @@
 export interface ParsedCSV {
   headers: string[];
   rows: Record<string, string>[];
+  rawRows: string[][];
 }
 
 export function parseCSV(rawText: string): ParsedCSV {
   if (!rawText || !rawText.trim()) {
-    return { headers: [], rows: [] };
+    return { headers: [], rows: [], rawRows: [] };
   }
 
   const lines: string[] = [];
@@ -38,7 +39,7 @@ export function parseCSV(rawText: string): ParsedCSV {
   }
 
   if (lines.length === 0) {
-    return { headers: [], rows: [] };
+    return { headers: [], rows: [], rawRows: [] };
   }
 
   // Parse baris demi baris menjadi array kolom
@@ -72,23 +73,24 @@ export function parseCSV(rawText: string): ParsedCSV {
   });
 
   const rows: Record<string, string>[] = [];
+  const rawRows: string[][] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue; // Lewati baris kosong
 
     const cols = parseLine(lines[i]);
+    const cleanCols = cols.map(c => c.replace(/^["']|["']$/g, '').trim());
+    rawRows.push(cleanCols);
+
     const row: Record<string, string> = {};
 
     headers.forEach((header, index) => {
-      let value = cols[index] || '';
-      // Bersihkan tanda kutip pembungkus
-      value = value.replace(/^["']|["']$/g, '').trim();
-      row[header] = value;
+      row[header] = cleanCols[index] || '';
     });
 
     rows.push(row);
   }
 
-  return { headers, rows };
+  return { headers, rows, rawRows };
 }
