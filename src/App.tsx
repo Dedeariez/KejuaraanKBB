@@ -954,11 +954,11 @@ export default function App() {
               </div>
             </div>
 
-            {/* EVENT DETAILS GRID & QUICK METRICS */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* EVENT DETAILS */}
+            <div className="w-full">
               
               {/* Event Schedule Identity */}
-              <div className="lg:col-span-2 bg-white border-2 border-slate-900 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="bg-white border-2 border-slate-900 rounded-2xl p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-3">
                   <Calendar className="w-8 h-8 text-[#FF6600]" />
                   <h3 className="text-lg font-black uppercase text-slate-950 tracking-tight font-display">
@@ -983,46 +983,9 @@ export default function App() {
                     </div>
                     <div className="border border-slate-250 p-4 rounded-xl">
                       <span className="block text-xs font-mono font-bold text-slate-500 uppercase">TEMA KEJUARAAN ANTAR SATLAT</span>
-                      <p className="font-extrabold text-sm text-slate-900 mt-1 uppercase">{EVENT_IDENTITY.theme}</p>
+                      <p className="font-extrabold text-sm text-slate-950 mt-1 uppercase">{EVENT_IDENTITY.theme}</p>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Dynamic Sensus Statistics (Computed instantly) */}
-              <div className="bg-slate-950 text-white rounded-2xl p-6 border-2 border-slate-950 flex flex-col justify-between shadow-md">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
-                    <Award className="w-6 h-6 text-[#FF6600]" />
-                    <h3 className="text-sm font-black uppercase tracking-wider font-mono">DASHBOARD COUNTER</h3>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-baseline border-b border-white/10 pb-1.5">
-                      <span className="text-xs uppercase font-extrabold text-slate-400">Total Atlet Sensus:</span>
-                      <span className="text-3xl font-black font-display text-white">{validationStats.totalPeserta}</span>
-                    </div>
-                    <div className="flex justify-between items-baseline border-b border-white/10 pb-1.5">
-                      <span className="text-xs uppercase font-extrabold text-slate-400 font-bold">Tuntas Timbang:</span>
-                      <span className="text-xl font-black text-[#FF6600]">{computedStats.weighed} <span className="text-xs text-slate-400">Atlets</span></span>
-                    </div>
-                    <div className="flex justify-between items-baseline border-b border-white/10 pb-1.5">
-                      <span className="text-xs uppercase font-extrabold text-slate-400">Peserta Tarung:</span>
-                      <span className="text-base font-black text-white">{validationStats.totalTarung}</span>
-                    </div>
-                    <div className="flex justify-between items-baseline border-b border-white/10 pb-1.5">
-                      <span className="text-xs uppercase font-extrabold text-slate-400 font-bold">Peserta Seni Gerak:</span>
-                      <span className="text-base font-black text-white">{validationStats.totalSeniGerak}</span>
-                    </div>
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-xs uppercase font-extrabold text-slate-400">Mangkir / Tidak Kirim:</span>
-                      <span className="text-base font-black text-white">{validationStats.tidakMengirimkan}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white/10 p-2.5 rounded text-center text-xs font-mono uppercase font-black text-orange-400 border border-white/5 mt-4">
-                  Grand Total {validationStats.totalPeserta} Peserta Valid Terdaftar di Tab Hitungan Resmi
                 </div>
               </div>
 
