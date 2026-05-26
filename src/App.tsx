@@ -43,7 +43,7 @@ const EVENT_IDENTITY = {
   name: "Panitia Kejuaraan Antar Satlat se Kabupaten Bandung Barat Ke 2 2026",
   theme: "Bertarung dalam kehormatan sebagai wadah generasi Berakhlak",
   motto: "Aku ramah bukan berarti takut, aku tunduk bukan berarti takluk",
-  organizer: "Pengcab KODRAT Kabupaten Bandung Barat",
+  organizer: "KODRAT Kabupaten Bandung Barat",
   venue: "Gedung K.H Hilmi Aminudin, Nurul Fikri Boarding School Lembang, Kabupaten Bandung Barat"
 };
 
