@@ -997,7 +997,7 @@ export default function App() {
                 📖 Petunjuk Verifikasi Bagi Kontingen Coach / Atlet:
               </h3>
               <p className="text-sm text-slate-900 font-bold leading-relaxed mb-4">
-                Setiap Atlet yang terdata wajib mendaftarkan 6 berkas orisinil (KTP/KK, Berkas Ijazah, Surat Keterangan Medis Dokter, Izin Wali Orang Tua, Pas Foto, dan Surat Pernyataan Anggota). Silakan beralih ke tombol <strong className="text-[#FF6600] uppercase font-black">🔍 2. Pencarian &amp; Sensus Atlet</strong> di atas, ketik nama atlet Anda, klik tombol <strong className="bg-[#FF6600] uppercase text-black text-xs font-mono px-1.5 py-0.5 rounded">Verifikasi</strong> untuk memonitor ataupun melengkapi tanda centang persetujuan dokumen oleh Panitia Timbangan Pelaksana.
+                Setiap Atlet yang terdata wajib mendaftarkan 6 berkas orisinil (KTP/KK, Berkas Ijazah, Surat Keterangan Medis Dokter, Izin Wali Orang Tua, Pas Foto, dan Surat Pernyataan Anggota). Silakan beralih ke tombol <strong className="text-[#FF6600] uppercase font-black">🔍 2. Pencarian &amp; Sensus Atlet</strong> di atas, ketik nama atlet Anda, klik tombol <strong className="bg-[#FF6600] uppercase text-black text-xs font-mono px-1.5 py-0.5 rounded">Verifikasi</strong> untuk memonitor ataupun melengkapi tanda centang persetujuan dokumen oleh Panitia.
               </p>
             </div>
 
