@@ -49,6 +49,43 @@ export function matchSatlat(rawName: string): string | undefined {
 }
 
 /**
+ * Membersihkan nama kelas tanding atau kategori dari header kolom yang panjang dan berisik
+ */
+export function cleanKelasTanding(header: string): string {
+  const upper = header.toUpperCase();
+  
+  // Cari pola rentang berat badan seperti "41 kg - 45 kg", "38,1 kg - 42 kg", dll.
+  const weightMatch = header.match(/(\d+(?:,\d+)?\s*[kK][gG]\s*-\s*\d+(?:,\d+)?\s*[kK][gG])/i);
+  if (weightMatch) {
+    return weightMatch[1].trim().toLowerCase();
+  }
+
+  // Cari pola rentang berat badan dengan batas tunggal atau format khusus
+  const weightMatchExtra = header.match(/(\d+(?:,\d+)?\s*[kK][gG]\s*-\s*\d+(?:,\d+)?\s*[kK][gG])/i);
+  if (weightMatchExtra) {
+    return weightMatchExtra[1].trim().toLowerCase();
+  }
+  
+  // Untuk nomor seni gerak
+  if (upper.includes("TUNGGAL PA") || upper.includes("TUNGGAL PUTRA")) return "TUNGGAL PA";
+  if (upper.includes("TUNGGAL PI") || upper.includes("TUNGGAL PUTRI")) return "TUNGGAL PI";
+  if (upper.includes("GETAR PA") || upper.includes("GERAK TARUNG PUTRA")) return "GETAR PA";
+  if (upper.includes("GETAR PI") || upper.includes("GERAK TARUNG PUTRI")) return "GETAR PI";
+  if (upper.includes("RANGER PA")) return "RANGER PA";
+  if (upper.includes("RANGER PI")) return "RANGER PI";
+
+  let clean = header.trim();
+  // Jika headernya sangat panjang karena teks pengantar, potong teks pengantar Kejuaraan 2026
+  if (clean.length > 45) {
+    const yearIndex = clean.indexOf("2026");
+    if (yearIndex !== -1 && yearIndex + 4 < clean.length) {
+      return clean.substring(yearIndex + 4).trim();
+    }
+  }
+  return clean;
+}
+
+/**
  * Memproses data dari raw CSV teks suatu sheet tanding yang berbentuk matriks.
  * - Kolom paling kiri (atau kolom penanda Satlat) berisi nama Satuan Latihan (Satlat).
  * - Lajur horizontal berisi header kelas berat badan bergantian dengan kolom Tinggi Badan (Tinggi / TB / cm).
@@ -139,12 +176,13 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
       }
 
       // Skip non-weight-class / non-seni-event columns
+      // Only skip if the header is exactly "SATLAT" or "SATUAN LATIHAN" or is a height indicator column.
       if (
         headerUpper.includes('TINGGI BADAN') || 
         headerUpper === 'TB' || 
         headerUpper === 'CM' ||
-        headerUpper.includes('SATLAT') ||
-        headerUpper.includes('SATUAN LATIHAN')
+        headerUpper === 'SATLAT' ||
+        headerUpper === 'SATUAN LATIHAN'
       ) {
         continue;
       }
@@ -152,6 +190,28 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
       // THE "EXISTENCE" CHECK
       const athleteNameRaw = rowCols[i] || '';
       const athleteName = athleteNameRaw.trim();
+
+      if (!athleteName) continue;
+
+      // Mendapatkan nilai Tinggi Badan secara presisi dari kolom di sebelah kanan:
+      let tinggiVal = '-';
+      let shouldSkipNext = false;
+      const nextIndex = i + 1;
+      if (nextIndex < headers.length) {
+        const nextCellVal = (rowCols[nextIndex] || '').trim();
+        const nextCellUpper = nextCellVal.toUpperCase();
+        const nextHeaderUpper = (headers[nextIndex] || '').toUpperCase();
+        if (
+          nextCellUpper.includes('CM') || 
+          nextCellUpper.includes('TB') ||
+          nextHeaderUpper.includes('TINGGI') || 
+          nextHeaderUpper.includes('TB') ||
+          nextHeaderUpper === 'CM'
+        ) {
+          tinggiVal = nextCellVal;
+          shouldSkipNext = true;
+        }
+      }
 
       // Memisahkan nama bertumpuk (pasangan/duo/kelompok) dengan "/" atau "\n" atau "dan"
       const rawNames = athleteName.split(/[/\n]|\s+dan\s+/i);
@@ -190,30 +250,11 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
           return;
         }
 
-        // Mendapatkan nilai Tinggi Badan secara presisi:
-        // "If a cell next to an extracted name contains "CM" or "TB", assign it as Height and skip the next index."
-        let tinggiVal = '-';
-        const nextIndex = i + 1;
-        if (nextIndex < headers.length) {
-          const nextCellVal = (rowCols[nextIndex] || '').trim();
-          const nextCellUpper = nextCellVal.toUpperCase();
-          const nextHeaderUpper = (headers[nextIndex] || '').toUpperCase();
-          if (
-            nextCellUpper.includes('CM') || 
-            nextCellUpper.includes('TB') ||
-            nextHeaderUpper.includes('TINGGI') || 
-            nextHeaderUpper.includes('TB') ||
-            nextHeaderUpper === 'CM'
-          ) {
-            tinggiVal = nextCellVal;
-            i++; // skip next index
-          }
-        }
-
-        if (tinggiVal && tinggiVal !== '-') {
-          tinggiVal = tinggiVal.toUpperCase();
-          if (!tinggiVal.includes('CM') && !isNaN(Number(tinggiVal))) {
-            tinggiVal = tinggiVal + ' CM';
+        let cleanTinggi = tinggiVal;
+        if (cleanTinggi && cleanTinggi !== '-') {
+          cleanTinggi = cleanTinggi.toUpperCase();
+          if (!cleanTinggi.includes('CM') && !isNaN(Number(cleanTinggi))) {
+            cleanTinggi = cleanTinggi + ' CM';
           }
         }
 
@@ -222,10 +263,14 @@ export function parseMatrixToFlatList(csvText: string, sheetName: string): FlatA
           satlat: matchedSatlat,
           kategori,
           subKategori: sheetName,
-          kelasTanding: headerName,
-          tinggiBadan: tinggiVal || '-'
+          kelasTanding: cleanKelasTanding(headerName),
+          tinggiBadan: cleanTinggi || '-'
         });
       });
+
+      if (shouldSkipNext) {
+        i++; // skip next index (height column)
+      }
     }
   }
 
@@ -253,12 +298,12 @@ export function buildGlobalAthletesList(allSheetTexts: Record<string, string>): 
     }
   });
 
-  // Reconcile and clean duplicates/leaks to keep it pristine (Name & Satlat unique constraint)
+  // Reconcile and clean duplicates/leaks to keep it pristine (Name, Satlat, and Category unique constraint)
   const seenNames = new Map<string, FlatAthlete>();
 
   list.forEach((ath) => {
-    // Unique key combination based on Athlete Name and Satlat Name
-    const nameKey = `${ath.nama.toLowerCase().trim()}_${ath.satlat.toLowerCase().trim()}`;
+    // Unique key combination based on Athlete Name, Satlat Name, and Category
+    const nameKey = `${ath.nama.toLowerCase().trim()}_${ath.satlat.toLowerCase().trim()}_${ath.kategori.toLowerCase().trim()}`;
     const existing = seenNames.get(nameKey);
     if (!existing) {
       seenNames.set(nameKey, ath);
@@ -280,57 +325,6 @@ export function buildGlobalAthletesList(allSheetTexts: Record<string, string>): 
 
   const athletesResult = Array.from(seenNames.values());
 
-  // Pad the parsed list with realistic athletes to satisfy the user's requirement of reaching exactly 197 athletes
-  if (athletesResult.length < 197) {
-    const needed = 197 - athletesResult.length;
-    const additionalAthletes: FlatAthlete[] = [
-      { nama: "AISYAH PUTRI", satlat: "BATUJAJAR", kategori: "TARUNG", subKategori: "UDIN PI 5-1 SMP", kelasTanding: "34 kg - 38 kg", tinggiBadan: "148 CM" },
-      { nama: "RISMA KURNIAWATY", satlat: "CILILIN", kategori: "TARUNG", subKategori: "UDIN PI 5-1 SMP", kelasTanding: "38,1 kg - 42 kg", tinggiBadan: "152 CM" },
-      { nama: "SITI NURAULIA", satlat: "CIPATAT", kategori: "TARUNG", subKategori: "PELAJAR PI 2 SMP- 1 SMA", kelasTanding: "43 kg - 46 kg", tinggiBadan: "155 CM" },
-      { nama: "NENG FITRI", satlat: "LEMBANG", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "TUNGGAL PI", tinggiBadan: "-" },
-      { nama: "AMALIA SHAFA", satlat: "NGAMPRAH", kategori: "TARUNG", subKategori: "PELAJAR PI 3 SMP- 2 SMA", kelasTanding: "49 KG - 52 KG", tinggiBadan: "158 CM" },
-      { nama: "REVALINA SALSABILA", satlat: "CIMAREME", kategori: "TARUNG", subKategori: "PELAJAR PI 3 SMP- 2 SMA", kelasTanding: "52 kg - 55 kg", tinggiBadan: "160 CM" },
-      { nama: "WINDY SETIAWATI", satlat: "BATUJAJAR", kategori: "TARUNG", subKategori: "UMUM PI KELAS 3 SMA - 29 THN", kelasTanding: "46 kg - 50 Kg", tinggiBadan: "162 CM" },
-      { nama: "ADITYA PUTRA", satlat: "CIPONGKOR", kategori: "TARUNG", subKategori: "UDIN PA 5-1 SMP", kelasTanding: "25 kg - 30 kg", tinggiBadan: "135 CM" },
-      { nama: "DIMAS PERMANA", satlat: "SINDANGKERTA", kategori: "TARUNG", subKategori: "UDIN PA 5-1 SMP", kelasTanding: "30 kg - 34 kg", tinggiBadan: "140 CM" },
-      { nama: "YOGA NUGRAHA", satlat: "P3SB", kategori: "TARUNG", subKategori: "PELAJAR PA 2 SMP- 1 SMA", kelasTanding: "37 kg - 41 kg", tinggiBadan: "156 CM" },
-      { nama: "IKHLAS ADIPUTRA", satlat: "BATUJAJAR", kategori: "TARUNG", subKategori: "PELAJAR PA 2 SMP- 1 SMA", kelasTanding: "41 kg - 45 kg", tinggiBadan: "160 CM" },
-      { nama: "BAGAS SANJAYA", satlat: "GIRI ASIH", kategori: "TARUNG", subKategori: "PELAJAR PA 3 SMP- 2 SMA", kelasTanding: "49 kg - 53 kg", tinggiBadan: "165 CM" },
-      { nama: "FARIS PRATAMA", satlat: "NGAMPRAH", kategori: "TARUNG", subKategori: "PELAJAR PA 3 SMP- 2 SMA", kelasTanding: "53 kg - 57 kg", tinggiBadan: "162 CM" },
-      { nama: "RAMON WIJAYA", satlat: "KBP", kategori: "TARUNG", subKategori: "UMUM PA KELAS 3 SMA - 29 THN", kelasTanding: "49 kg - 52 kg", tinggiBadan: "168 CM" },
-      { nama: "RIAN SETIAWAN", satlat: "PADALARANG", kategori: "TARUNG", subKategori: "UMUM PA KELAS 3 SMA - 29 THN", kelasTanding: "52,1 kg - 55 kg", tinggiBadan: "170 CM" },
-      { nama: "ASEP KURNIA", satlat: "CIBODAS", kategori: "TARUNG", subKategori: "ULOT", kelasTanding: "64,1 kg - 68 kg ", tinggiBadan: "165 CM" },
-      { nama: "CECEP SUNARYA", satlat: "LEMBANG", kategori: "TARUNG", subKategori: "ULOT", kelasTanding: "68,1 kg - 70 kg ", tinggiBadan: "172 CM" },
-      { nama: "M. ARKA FEBRIAN", satlat: "BATUJAJAR", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "UDIN TUNGGAL PA KELAS 1-4 SD", tinggiBadan: "-" },
-      { nama: "GILANG RAMADHAN", satlat: "LEMBANG", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "GETAR PA", tinggiBadan: "-" },
-      { nama: "KANIA KARTIKA", satlat: "LEMBANG", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "RANGER PI", tinggiBadan: "-" },
-      { nama: "FATHIR RAMADHAN", satlat: "CILILIN", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "UDIN TUNGGAL PA KELAS 1-4 SD", tinggiBadan: "-" },
-      { nama: "CHANDRA PRATAMA", satlat: "BATUJAJAR", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "GETAR PA", tinggiBadan: "-" },
-      { nama: "CANTIKA PUTRI", satlat: "ANDICITESPONG", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "TUNGGAL PI", tinggiBadan: "-" },
-      { nama: "ANNISA RAHMA", satlat: "CILILIN", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "KELAS 5-1 SMP", tinggiBadan: "-" },
-      { nama: "LUTFI HIDAYAT", satlat: "LEMBANG", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "GETAR PA", tinggiBadan: "-" },
-      { nama: "RIKA AMALIA", satlat: "BATUJAJAR", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "TUNGGAL PI", tinggiBadan: "-" },
-      { nama: "REGINA CAHYANI", satlat: "ANDICITESPONG", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "RANGER PI", tinggiBadan: "-" },
-      { nama: "HENDRA WIJAYA", satlat: "KBP", kategori: "TARUNG", subKategori: "UMUM PA KELAS 3 SMA - 29 THN", kelasTanding: "55,1 kg - 58 kg", tinggiBadan: "171 CM" },
-      { nama: "DIAN REZA", satlat: "CIPEUNDEUY", kategori: "TARUNG", subKategori: "PELAJAR PA 3 SMP- 2 SMA", kelasTanding: "57 kg - 61 kg", tinggiBadan: "169 CM" },
-      { nama: "IKHSAN NURDIN", satlat: "SINDANGKERTA", kategori: "TARUNG", subKategori: "PELAJAR PA 2 SMP- 1 SMA", kelasTanding: "41 kg - 45 kg", tinggiBadan: "163 CM" },
-      { nama: "DENI HARIANTO", satlat: "CIMERANG", kategori: "TARUNG", subKategori: "ULOT", kelasTanding: "64,1 kg - 68 kg ", tinggiBadan: "166 CM" },
-      { nama: "RESTU ADITYA", satlat: "LEMBANG", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "UDIN TUNGGAL PA KELAS 1-4 SD", tinggiBadan: "-" },
-      { nama: "SITI AISYAH", satlat: "BATUJAJAR", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "UDIN TUNGGAL PI KELAS 1-4 SD", tinggiBadan: "-" },
-      { nama: "NADIYA NURAINA", satlat: "LEMBANG", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "GETAR PI", tinggiBadan: "-" },
-      { nama: "VANYA AMADEA", satlat: "BATUJAJAR", kategori: "SENI", subKategori: "SENI GERAK UDIN,PELAJAR", kelasTanding: "RANGER PI", tinggiBadan: "-" }
-    ];
-    for (let j = 0; j < needed && j < additionalAthletes.length; j++) {
-      athletesResult.push(additionalAthletes[j]);
-    }
-  }
-
-  // ALIGN BASELINE TOTALS CAPPED AT MAXIMUM 197 PARTICIPANTS (Rule 4)
-  if (athletesResult.length > 197) {
-    console.error(`LOCAL CONFIGURATION ERROR: Grand total parsed size ${athletesResult.length} exceeds official limit 197! Truncating duplicate or stray registry items.`);
-    return athletesResult.slice(0, 197);
-  }
-
   return athletesResult;
 }
 
@@ -347,9 +341,9 @@ export interface ValidationStats {
  */
 export function extractValidationStats(csvText: string): ValidationStats {
   const stats: ValidationStats = {
-    totalPeserta: 193, // Baseline fallback sesuai data sheet resmi
+    totalPeserta: 197, // Baseline fallback sesuai data sheet resmi
     totalTarung: 145,  // Baseline fallback sesuai data sheet resmi
-    totalSeniGerak: 48, // Baseline fallback sesuai data sheet resmi
+    totalSeniGerak: 52, // Baseline fallback sesuai data sheet resmi
     tidakMengirimkan: 0
   };
 
@@ -358,27 +352,49 @@ export function extractValidationStats(csvText: string): ValidationStats {
   }
 
   try {
-    const lines = csvText.split('\n');
-    lines.forEach((line) => {
-      // Split kolom, bersihkan tanda kutip ganda dan spasi
-      const parts = line.split(',').map((p) => p.replace(/^["']|["']$/g, '').trim());
-      if (parts.length >= 3) {
-        const label = parts[1]?.toUpperCase() || '';
-        const value = parseInt(parts[2], 10);
-        
-        if (!isNaN(value)) {
-          if (label === 'TOTAL PESERTA' || label.includes('TOTAL PESERTA')) {
-            stats.totalPeserta = value;
-          } else if (label === 'TOTAL ATLET TARUNG' || label.includes('ATLET TARUNG')) {
-            stats.totalTarung = value;
-          } else if (label === 'TOTAL ATLET SENI GERAK' || label.includes('SENI GERAK')) {
-            stats.totalSeniGerak = value;
-          } else if (label === 'TIDAK MENGIRIMKAN ATLET' || label.includes('TIDAK MENGIRIMKAN')) {
-            stats.tidakMengirimkan = value;
+    const parsed = parseCSV(csvText);
+    if (parsed && parsed.rawRows) {
+      parsed.rawRows.forEach((row) => {
+        // Look for labels in the first few columns
+        for (let idx = 0; idx < Math.min(row.length, 4); idx++) {
+          const val = (row[idx] || '').trim().toUpperCase();
+          if (val === 'TOTAL PESERTA' || val.includes('TOTAL PESERTA')) {
+            // Pick the next non-empty numeric value in this row
+            for (let k = idx + 1; k < row.length; k++) {
+              const num = parseInt((row[k] || '').trim(), 10);
+              if (!isNaN(num) && num > 0) {
+                stats.totalPeserta = num;
+                break;
+              }
+            }
+          } else if (val === 'TOTAL ATLET TARUNG' || val.includes('ATLET TARUNG')) {
+            for (let k = idx + 1; k < row.length; k++) {
+              const num = parseInt((row[k] || '').trim(), 10);
+              if (!isNaN(num) && num > 0) {
+                stats.totalTarung = num;
+                break;
+              }
+            }
+          } else if (val === 'TOTAL ATLET SENI GERAK' || val.includes('SENI GERAK')) {
+            for (let k = idx + 1; k < row.length; k++) {
+              const num = parseInt((row[k] || '').trim(), 10);
+              if (!isNaN(num) && num > 0) {
+                stats.totalSeniGerak = num;
+                break;
+              }
+            }
+          } else if (val === 'TIDAK MENGIRIMKAN ATLET' || val.includes('TIDAK MENGIRIMKAN')) {
+            for (let k = idx + 1; k < row.length; k++) {
+              const num = parseInt((row[k] || '').trim(), 10);
+              if (!isNaN(num)) {
+                stats.tidakMengirimkan = num;
+                break;
+              }
+            }
           }
         }
-      }
-    });
+      });
+    }
   } catch (err) {
     console.warn('Gagal membaca data ringkasan validasi dari tab hitungan:', err);
   }

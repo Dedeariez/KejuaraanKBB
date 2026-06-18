@@ -93,7 +93,7 @@ export const SPREADSHEET_TABS: SpreadsheetTab[] = [
   },
   {
     name: 'DATA HITUNGAN ATLET KEJURKAB',
-    gid: '1314216492',
+    gid: '1561323063',
     category: 'data',
     description: 'Rekapitulasi dan Analisis Hitungan Jumlah Atlet Kejurkab KBB'
   }
@@ -108,11 +108,12 @@ export const SPREADSHEET_TABS: SpreadsheetTab[] = [
  * @returns String URL Fetch
  */
 export function getCSVUrl(tab: SpreadsheetTab): string {
+  const cacheBuster = `&t=${Date.now()}`;
   if (tab.gid) {
-    return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${tab.gid}`;
+    return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${tab.gid}${cacheBuster}`;
   }
   // Alternatif handal jika GID tidak dideklarasikan: ekspor tab berdasarkan nama sheet aslinya
-  return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab.name)}`;
+  return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab.name)}${cacheBuster}`;
 }
 
 /**
@@ -121,13 +122,14 @@ export function getCSVUrl(tab: SpreadsheetTab): string {
  */
 export async function fetchRawCsv(gidOrName: string): Promise<string> {
   let url = '';
-  // Cek apakah input berupa GID murni (numeric) atau Nama Sheet
+  // Cek apakah input berupa GID murni (numeric) or Nama Sheet
   const isNumericGid = /^\d+$/.test(gidOrName);
+  const cacheBuster = `&t=${Date.now()}`;
   
   if (isNumericGid) {
-    url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${gidOrName}`;
+    url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${gidOrName}${cacheBuster}`;
   } else {
-    url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(gidOrName)}`;
+    url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(gidOrName)}${cacheBuster}`;
   }
 
   try {
