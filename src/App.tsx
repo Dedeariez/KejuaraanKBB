@@ -43,7 +43,7 @@ const EVENT_IDENTITY = {
   name: "Panitia Kejuaraan Antar Satlat se Kabupaten Bandung Barat Ke 2 2026",
   theme: "Bertarung dalam kehormatan sebagai wadah generasi Berakhlak",
   motto: "Aku ramah bukan berarti takut, aku tunduk bukan berarti takluk",
-  organizer: "KODRAT Kabupaten Bandung Barat",
+  organizer: "Pengcab KODRAT Kabupaten Bandung Barat",
   venue: "Gedung K.H Hilmi Aminudin, Nurul Fikri Boarding School Lembang, Kabupaten Bandung Barat"
 };
 
@@ -146,6 +146,9 @@ export default function App() {
   const [globalAthletes, setGlobalAthletes] = useState<FlatAthlete[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [isLiveSync, setIsLiveSync] = useState<boolean>(false);
 
   // Validation metrics state initialized with real official baseline constants
   const [validationStats, setValidationStats] = useState<ValidationStats>({
@@ -379,8 +382,12 @@ export default function App() {
         if (active) {
           setGlobalAthletes(flatAthletes);
           setValidationStats(parsedStats);
+          setLastSyncTime(new Date());
           if (hasCORSLimit) {
+            setIsLiveSync(false);
             setErrorText("Kebijakan keamanan (CORS) atau server Google tidak terjangkau. Mode Database Local diaktifkan secara otomatis (Menampilkan 289 Roster resmi).");
+          } else {
+            setIsLiveSync(true);
           }
         }
       } catch (err: any) {
@@ -416,6 +423,8 @@ export default function App() {
         if (active) {
           setGlobalAthletes(flatAthletes);
           setValidationStats(parsedStats);
+          setLastSyncTime(new Date());
+          setIsLiveSync(false);
           setErrorText("Sistem tidak dapat menjangkau spreadsheet. Membuka data lokal terverifikasi (Sebanyak 289 Atlet Resmi).");
         }
       } finally {
@@ -429,7 +438,7 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [refreshTrigger]);
 
   // Compute stats on the fly from parsed data with absolutely NO mock stats or hardcoded rosters
   const computedStats = useMemo(() => {
@@ -862,7 +871,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="text-center md:text-right shrink-0 bg-slate-900 border-2 border-slate-800 rounded-2xl p-4 shadow-lg min-w-[240px]">
+          <div className="text-center md:text-right shrink-0 bg-slate-900 border-2 border-slate-800 rounded-2xl p-4 shadow-lg min-w-[245px]">
             <span className="text-xs text-orange-400 font-mono tracking-widest font-black uppercase flex items-center justify-center md:justify-end gap-1.5 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
               WIB LIVE CLOCK
@@ -870,6 +879,39 @@ export default function App() {
             <p className="text-sm md:text-base font-black text-white font-mono leading-tight">
               {formattedWIBClock}
             </p>
+            
+            <div className="border-t border-slate-800 mt-2.5 pt-2 flex flex-col items-center md:items-end justify-center font-mono">
+              <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold block mb-1">
+                STATUS DATA UTAMA:
+              </span>
+              {isLoading && !lastSyncTime ? (
+                <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  <span>SINKRONISASI SEGAR...</span>
+                </div>
+              ) : lastSyncTime ? (
+                isLiveSync ? (
+                  <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-black">
+                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                    <span>LIVE SINKRON: {lastSyncTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center md:items-end">
+                    <div className="flex items-center gap-1 text-[10px] text-amber-500 font-black">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>DATABASE LOKAL (OFFLINE)</span>
+                    </div>
+                    <span className="text-[8px] text-slate-400 font-bold mt-0.5">
+                      DIBUKA: {lastSyncTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
+                    </span>
+                  </div>
+                )
+              ) : (
+                <div className="flex items-center gap-1 text-[10px] text-slate-500 font-bold">
+                  <span>BELUM DISINKRONKAN</span>
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
@@ -900,7 +942,7 @@ export default function App() {
             }`}
           >
             <Search className="w-5 h-5" />
-            <span>2. Pencarian &amp; Sensus Atlet ({globalAthletes.length})</span>
+            <span>2. Pencarian &amp; Sensus Atlet</span>
           </button>
 
           <button
@@ -997,7 +1039,7 @@ export default function App() {
                 📖 Petunjuk Verifikasi Bagi Kontingen Coach / Atlet:
               </h3>
               <p className="text-sm text-slate-900 font-bold leading-relaxed mb-4">
-                Setiap Atlet yang terdata wajib mendaftarkan 6 berkas orisinil (KTP/KK, Berkas Ijazah, Surat Keterangan Medis Dokter, Izin Wali Orang Tua, Pas Foto, dan Surat Pernyataan Anggota). Silakan beralih ke tombol <strong className="text-[#FF6600] uppercase font-black">🔍 2. Pencarian &amp; Sensus Atlet</strong> di atas, ketik nama atlet Anda, klik tombol <strong className="bg-[#FF6600] uppercase text-black text-xs font-mono px-1.5 py-0.5 rounded">Verifikasi</strong> untuk memonitor ataupun melengkapi tanda centang persetujuan dokumen oleh Panitia.
+                Setiap Atlet yang terdata wajib mendaftarkan 6 berkas orisinil (KTP/KK, Berkas Ijazah, Surat Keterangan Medis Dokter, Izin Wali Orang Tua, Pas Foto, dan Surat Pernyataan Anggota). Silakan beralih ke tombol <strong className="text-[#FF6600] uppercase font-black">🔍 2. Pencarian &amp; Sensus Atlet</strong> di atas, ketik nama atlet Anda, klik tombol <strong className="bg-[#FF6600] uppercase text-black text-xs font-mono px-1.5 py-0.5 rounded">Verifikasi</strong> untuk memonitor ataupun melengkapi tanda centang persetujuan dokumen oleh Panitia Timbangan Pelaksana.
               </p>
             </div>
 
@@ -1127,9 +1169,20 @@ export default function App() {
             <div className="bg-white border-2 border-slate-950 rounded-2xl overflow-hidden shadow">
               
               <div className="bg-slate-950 text-white p-4 font-mono text-xs flex justify-between items-center flex-wrap gap-2">
-                <span className="font-bold uppercase tracking-wider text-[#FF6600]">
-                  DAFTAR SENSUS COCOK ATLET ({filteredAthletes.length} ATLET DIKETEMUKAN)
-                </span>
+                <div className="flex items-center flex-wrap gap-3">
+                  <span className="font-bold uppercase tracking-wider text-[#FF6600]">
+                    DAFTAR SENSUS COCOK ATLET ({filteredAthletes.length} ATLET DIKETEMUKAN)
+                  </span>
+                  <button
+                    onClick={() => setRefreshTrigger(prev => prev + 1)}
+                    disabled={isLoading}
+                    title="Tarik ulang data segar live dari Google Sheets"
+                    className="flex items-center gap-1.5 bg-[#FF6600] active:scale-95 text-black font-black uppercase text-[10px] px-2.5 py-1 rounded-md transition-all duration-100 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+                    <span>Sinkron Live Sheet</span>
+                  </button>
+                </div>
                 <span className="text-[10px] bg-white/20 font-black tracking-widest px-2 py-0.5 rounded">
                   Daftar Sensus Cocok Atlet
                 </span>
@@ -1607,24 +1660,24 @@ export default function App() {
                       </div>
 
                       {/* Direct high-contrast download buttons at the bottom of the panel */}
-                      <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-300 justify-end">
+                      <div className="flex flex-row flex-wrap sm:flex-nowrap gap-3 pt-2 border-t border-slate-300 justify-end w-full">
                         <button
                           onClick={handleExportExcel}
                           disabled={exportFilteredAthletes.length === 0}
-                          className="flex items-center justify-center gap-2 bg-[#1d6f42] hover:bg-[#155230] text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl border-2 border-slate-950 cursor-pointer transition-colors shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#1d6f42] hover:bg-[#155230] text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl border-2 border-slate-950 cursor-pointer transition-colors shadow disabled:opacity-50 disabled:cursor-not-allowed text-center"
                           style={{ minHeight: '44px' }}
                         >
                           <FileSpreadsheet className="w-4 h-4 shrink-0" />
-                          <span>Download Excel (.xlsx)</span>
+                          <span>Unduh Excel (.xlsx)</span>
                         </button>
                         <button
                           onClick={handleExportPDF}
                           disabled={exportFilteredAthletes.length === 0}
-                          className="flex items-center justify-center gap-2 bg-[#c0392b] hover:bg-[#962d22] text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl border-2 border-slate-950 cursor-pointer transition-colors shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#c0392b] hover:bg-[#962d22] text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl border-2 border-slate-950 cursor-pointer transition-colors shadow disabled:opacity-50 disabled:cursor-not-allowed text-center"
                           style={{ minHeight: '44px' }}
                         >
                           <FileDown className="w-4 h-4 shrink-0" />
-                          <span>Download PDF</span>
+                          <span>Unduh PDF</span>
                         </button>
                       </div>
                     </div>
